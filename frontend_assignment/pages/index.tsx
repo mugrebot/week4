@@ -1,14 +1,52 @@
-import detectEthereumProvider from "@metamask/detect-provider"
-import { Strategy, ZkIdentity } from "@zk-kit/identity"
-import { generateMerkleProof, Semaphore } from "@zk-kit/protocols"
-import { providers } from "ethers"
-import Head from "next/head"
-import React from "react"
-import styles from "../styles/Home.module.css"
+import { yupResolver } from "@hookform/resolvers/yup";
+import detectEthereumProvider from "@metamask/detect-provider";
+import {
+    Button,
+    Card, CardActions, CardContent, Container, FormControl, Typography, TextField
+} from '@mui/material';
+import { Strategy, ZkIdentity } from "@zk-kit/identity";
+import { generateMerkleProof, Semaphore } from "@zk-kit/protocols";
+import Greeter from "artifacts/contracts/Greeters.sol/Greeters.json";
+import { Contract, providers, utils } from "ethers";
+import Head from "next/head";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as yup from "yup";
+import styles from "../styles/Home.module.css";
+import Form from "./components/GreetingForms";
+
 
 export default function Home() {
     const [logs, setLogs] = React.useState("Connect your wallet and greet!")
+    const [newGreeting, setGreeting] = useState("");
 
+    
+
+    useEffect(() => {
+      const listen = async () => {
+        const provider = new providers.JsonRpcProvider("http://localhost:8545")
+
+ 
+        const contract = new Contract(
+          "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          Greeter.abi,
+          provider
+        );
+ 
+        contract.on("NewGreeting", (greeting: string) => {
+            console.log("NewGreeting Event:");
+            console.log(newGreeting)
+          setGreeting(utils.parseBytes32String(greeting));
+        });
+
+        console.log("listener ON");
+        console.log(newGreeting)
+      };
+      listen();
+      console.log(newGreeting)
+  
+    }, [newGreeting]);
+    
     async function greet() {
         setLogs("Creating your Semaphore identity...")
 
@@ -56,6 +94,7 @@ export default function Home() {
             setLogs(errorMessage)
         } else {
             setLogs("Your anonymous greeting is onchain :)")
+            console.log('this is the', greeting)
         }
     }
 
@@ -67,7 +106,20 @@ export default function Home() {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
 
+            <Form onSubmit={(data) => console.log(data)} />
+
+            
+
             <main className={styles.main}>
+
+        <TextField
+          id="filled-multiline-flexible"
+          label="Textbox"
+          multiline
+          maxRows={4}
+          value={newGreeting}
+          variant="filled"
+        />
                 <h1 className={styles.title}>Greetings</h1>
 
                 <p className={styles.description}>A simple Next.js/Hardhat privacy application with Semaphore.</p>
